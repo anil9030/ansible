@@ -1,0 +1,49 @@
+---
+- name: install node and npm
+  hosts: 178.82.34.23
+  tasks:
+    - name: update apt repo and cache
+      apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
+    - name: install nodejs and npm
+      apt:
+        pkg:
+          - nodejs
+          - npm
+
+
+- name: create new linux user for node app
+  hosts: 178.82.34.23
+  vars_files:
+  - project_vars
+  tasks:
+  - name: create linux user
+    user:
+      name: {{linux_user}}
+      comment: anil Admin
+      group: admin
+
+
+- name: deploy nodejs app
+  hosts: 178.82.34.23
+  become: True
+  become_user: {{linux_user}}
+  vars_files:
+  - project_vars
+  tasks:
+    - name: unpack nodejs tar file
+      unarchive:
+        src: "{{location}}/nodejs-app-{{version}}.tgz"
+        dest: "{{user_home_dir}}"
+    - name: install dependencies
+      npm:
+        path: "{{user_home_dir}}"/package
+    - name: start application
+      command:
+        chdir: "{{user_home_dirn}}"/package/app
+        cmd: node server
+      async: 100
+      poll: 0
+    - name: ensure app is running
+      shell: ps aux | grep node
+      register: app_status
+    - debug: msg={{app_status.stdout_lines}}

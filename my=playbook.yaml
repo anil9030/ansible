@@ -1,0 +1,14 @@
+---
+- name: configure nginx web server
+hosts: ec2
+tasks:
+- name: install nginx server
+  apt:
+    name: nginx
+    state: latest
+- name: start web server
+  service:
+    name: nginx
+    state: started
+
+   
